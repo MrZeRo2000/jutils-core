@@ -6,10 +6,20 @@
  * User Manual available at https://docs.gradle.org/5.6/userguide/java_library_plugin.html
  */
 
+// for Bintray plugin
+buildscript {
+    repositories {
+        jcenter()
+    }
+}
+
 plugins {
     // Apply the java-library plugin to add support for Java Library
     id 'java-library'
     id 'maven-publish'
+    // for bintray
+    id "com.jfrog.bintray" version "1.8.0"
+    id "maven"
 }
 
 group = 'com.romanpulov'
@@ -30,6 +40,83 @@ publishing {
     publications {
         maven(MavenPublication) {
             from(components.java)
+        }
+    }
+}
+
+// Bintray config
+
+ext {
+    // Where you will see your artifact in Bintray's web interface
+    // The "bintrayName" should match the name of the Bintray repro.
+    bintrayRepo = 'maven'
+    bintrayName = 'romanpulov-jutils-core'
+
+    // Maven metadata
+    publishedGroupId = 'com.romanpulov'
+    // Save yourself a head ache, and set this equal to the name of the Android Studio library
+    // module. The artifact name needs to match the name of the library.
+    artifact = 'jutils-core'
+
+    libraryDescription = 'Roman Pulov Java utils library'
+    libraryVersion = '0.2'
+
+    developerId = 'romanpulov'
+    developerName = 'Roman Pulov'
+    developerEmail = 'roman.pulov@at.com'
+
+    siteUrl = 'https://github.com/MrZeRo2000/jutils-core'
+    gitUrl = 'https://github.com/MrZeRo2000/jutils-core.git'
+
+    licenseName = 'Apache License, Version 2.0'
+    licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+
+    allLicenses = ["Apache-2.0"]
+}
+
+// Bintray body
+
+version = libraryVersion
+
+tasks.register("sourcesJar", Jar) {
+    from sourceSets.main.allJava
+    classifier "sources"
+}
+
+tasks.register("javadocJar", Jar) {
+    from javadoc
+    classifier "javadoc"
+}
+
+artifacts {
+    archives javadocJar
+    archives sourcesJar
+}
+
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+
+bintray {
+    user = properties.getProperty("bintray.user")
+    key = properties.getProperty("bintray.apikey")
+
+    configurations = ['archives']
+    pkg {
+        repo = bintrayRepo
+        name = bintrayName
+        desc = libraryDescription
+        websiteUrl = siteUrl
+        vcsUrl = gitUrl
+        licenses = allLicenses
+        publish = true
+        publicDownloadNumbers = true
+        version {
+            desc = libraryDescription
+            gpg {
+                sign = true //Determines whether to GPG sign the files. The default is false
+                passphrase = properties.getProperty("bintray.gpg.password")
+                //Optional. The passphrase for GPG signing'
+            }
         }
     }
 }

@@ -1,0 +1,6 @@
+
+Publish to local Maven repo
+  gradlew publishMaven
+	
+Publish to Bintray
+  gradlew bintrayUpload
