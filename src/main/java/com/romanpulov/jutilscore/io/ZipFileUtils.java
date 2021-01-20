@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 /**
@@ -29,6 +30,35 @@ public class ZipFileUtils {
     }
 
     /**
+     * ZIPs the stream to the output stream
+     * @param entryName file name
+     * @param inputStream input stream to zip
+     * @param outputStream output stream to write to
+     * @throws IOException exception in case of errors working with streams
+     */
+    public static void zipStream(String entryName, InputStream inputStream, OutputStream outputStream) throws IOException {
+        ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream);
+
+        try {
+            //next entry
+            zipOutputStream.putNextEntry(new ZipEntry(entryName));
+
+            //write
+            byte[] buffer = new byte[1024];
+            int len;
+            while ((len = inputStream.read(buffer)) > 0) {
+                zipOutputStream.write(buffer, 0, len);
+            }
+
+            //complete entry
+            zipOutputStream.closeEntry();
+        } finally {
+            zipOutputStream.flush();
+            zipOutputStream.close();
+        }
+    }
+
+    /**
      * ZIPs the file to the same path with zip extension
      * @param filePath path to file
      * @param fileName file name
@@ -42,24 +72,14 @@ public class ZipFileUtils {
         File zipFile = new File(filePath + getZipFileName(fileName));
 
         InputStream inputStream = null;
-        ZipOutputStream zipOutputStream = null;
+        OutputStream outputStream = null;
         try {
             //init streams and entry
             inputStream = new FileInputStream(sourceFile);
-            zipOutputStream = new ZipOutputStream(new FileOutputStream(zipFile));
+            outputStream = new FileOutputStream(zipFile);
 
-            //next entry
-            zipOutputStream.putNextEntry(new ZipEntry(fileName));
+            zipStream(fileName, inputStream, outputStream);
 
-            //write
-            byte[] buffer = new byte[1024];
-            int len;
-            while ((len = inputStream.read(buffer)) > 0) {
-                zipOutputStream.write(buffer, 0, len);
-            }
-
-            //complete entry
-            zipOutputStream.closeEntry();
         } catch (IOException e) {
             return null;
         } finally {
@@ -73,10 +93,10 @@ public class ZipFileUtils {
             }
 
             //close output
-            if (zipOutputStream != null) {
+            if (outputStream != null) {
                 try {
-                    zipOutputStream.flush();
-                    zipOutputStream.close();
+                    outputStream.flush();
+                    outputStream.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -84,6 +104,24 @@ public class ZipFileUtils {
         }
 
         return zipFile.getPath();
+    }
+
+    public static String unZipStream(InputStream inputStream, OutputStream outputStream) throws IOException {
+        ZipInputStream zipInputStream = new ZipInputStream(inputStream);
+        ZipEntry entry = zipInputStream.getNextEntry();
+
+        if (entry != null) {
+            if (zipInputStream.available() > 0) {
+                byte[] buffer = new byte[1024];
+                int len;
+                while ((len = zipInputStream.read(buffer)) > 0) {
+                    outputStream.write(buffer, 0, len);
+                }
+            }
+            return entry.getName();
+        } else {
+            return null;
+        }
     }
 
     /**

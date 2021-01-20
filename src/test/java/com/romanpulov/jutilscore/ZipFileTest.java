@@ -6,9 +6,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -55,7 +53,7 @@ public class ZipFileTest {
 
         // generate and write random bytes file
 
-        byte[] b = new byte[20];
+        byte[] b = new byte[2048];
         new Random().nextBytes(b);
 
         try(ByteArrayInputStream inputStream = new ByteArrayInputStream(b)) {
@@ -82,5 +80,20 @@ public class ZipFileTest {
         // check if it is the same as bytes which were written
 
         Assertions.assertArrayEquals(b, Files.readAllBytes(filePath));
+
+        // unzip with stream
+
+        Assertions.assertFalse(Files.exists(unZipFilePath));
+        try (
+                InputStream inputStream = new FileInputStream(zipFilePath.toString());
+                OutputStream outputStream = new FileOutputStream(unZipFilePath.toString());
+        ) {
+            ZipFileUtils.unZipStream(inputStream, outputStream);
+        }
+        Assertions.assertTrue(Files.exists(unZipFilePath));
+
+        // check if it is the same as bytes which were written
+
+        Assertions.assertArrayEquals(b, Files.readAllBytes(unZipFilePath));
     }
 }
