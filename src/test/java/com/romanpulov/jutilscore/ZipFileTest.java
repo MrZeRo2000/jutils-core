@@ -17,22 +17,24 @@ public class ZipFileTest {
     private static final Path folderPath = Paths.get(System.getProperty("java.io.tmpdir") + "jutils-core-zip-file-test/");
 
     static void clearFolder() throws Exception  {
-        Files.walk(folderPath)
-                .filter(path -> !Files.isDirectory(path))
-                .forEach(path -> {
-                    System.out.println("Deleting " + path.toAbsolutePath().toString());
-                    try {
-                        Files.deleteIfExists(path);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                });
-
-        Files.deleteIfExists(folderPath);
+        if (Files.exists(folderPath)) {
+            Files.walk(folderPath)
+                    .filter(path -> !Files.isDirectory(path))
+                    .forEach(path -> {
+                        System.out.println("Deleting " + path.toAbsolutePath().toString());
+                        try {
+                            Files.deleteIfExists(path);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    });
+            Files.delete(folderPath);
+        }
     }
 
     @BeforeAll
     static void beforeAll() throws Exception {
+        System.out.println("Starting ZipFileTest: clearing folder");
         clearFolder();
 
         Files.createDirectory(folderPath);
@@ -41,8 +43,8 @@ public class ZipFileTest {
 
     @AfterAll
     static void afterAll() throws Exception {
-        //Files.deleteIfExists(folderPath);
-        //System.out.println("Folder deleted");
+        clearFolder();
+        System.out.println("Finalizing ZipFileTest: folder cleared");
     }
 
     @Test

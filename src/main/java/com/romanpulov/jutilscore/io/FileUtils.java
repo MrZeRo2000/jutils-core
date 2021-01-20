@@ -66,6 +66,20 @@ public class FileUtils {
     }
 
     /**
+     * Stream copy procedure
+     * @param inputStream input stream
+     * @param outputStream output stream
+     * @throws IOException in case of errors with streams
+     */
+    public static void copyStream(InputStream inputStream, OutputStream outputStream) throws IOException {
+        byte[] buf = new byte[FILE_BUF_LEN];
+        int len;
+        while ((len = inputStream.read(buf)) > 0) {
+            outputStream.write(buf, 0, len);
+        }
+    }
+
+    /**
      * File copy procedure
      * @param sourceFileName source file
      * @param destFileName destination file
@@ -80,11 +94,7 @@ public class FileUtils {
             outputStream = new FileOutputStream(destFileName);
 
             //copy routine
-            byte[] buf = new byte[FILE_BUF_LEN];
-            int len;
-            while ((len = inputStream.read(buf)) > 0) {
-                outputStream.write(buf, 0, len);
-            }
+            copyStream(inputStream, outputStream);
 
             return true;
         } catch (IOException e) {
@@ -119,6 +129,10 @@ public class FileUtils {
         return (f.exists() && f.delete());
     }
 
+    public static String getCopyFileName(String fileName, int copyNum) {
+        return String.format(Locale.getDefault(), FILE_COPY_FORMAT, fileName, copyNum);
+    }
+
     /**
      * Save rolling copies of a file
      * @param fileName full file name path
@@ -127,7 +141,7 @@ public class FileUtils {
     public static boolean saveCopies(String fileName) {
         for (int cp = mFileKeepCopiesCount - 1; cp >= 0; cp--) {
             File fc = new File(cp == 0 ? fileName : String.format(Locale.getDefault(), FILE_COPY_FORMAT, fileName, cp));
-            String copyFileName = String.format(Locale.getDefault(), FILE_COPY_FORMAT, fileName, cp + 1);
+            String copyFileName = getCopyFileName(fileName, cp + 1);
             if (fc.exists()) {
                 if (!copy(fc.getPath(), copyFileName))
                     return false;
@@ -143,8 +157,8 @@ public class FileUtils {
      */
     public static boolean renameCopies(String fileName) {
         for (int cp = mFileKeepCopiesCount - 1; cp >= 0; cp--) {
-            File fc = new File(cp == 0 ? fileName : String.format(Locale.getDefault(), FILE_COPY_FORMAT, fileName, cp));
-            String copyFileName = String.format(Locale.getDefault(), FILE_COPY_FORMAT, fileName, cp + 1);
+            File fc = new File(cp == 0 ? fileName : getCopyFileName(fileName, cp));
+            String copyFileName = getCopyFileName(fileName, cp + 1);
             if (fc.exists()) {
                 if (!fc.renameTo(new File(copyFileName)))
                     return false;
