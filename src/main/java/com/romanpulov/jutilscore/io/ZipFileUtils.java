@@ -106,6 +106,13 @@ public class ZipFileUtils {
         return zipFile.getPath();
     }
 
+    /**
+     * unZIPs from input stream to output stream
+     * @param inputStream input stream with ZIP content
+     * @param outputStream output stream
+     * @return zip entry
+     * @throws IOException in case of errors with streams
+     */
     public static String unZipStream(InputStream inputStream, OutputStream outputStream) throws IOException {
         ZipInputStream zipInputStream = new ZipInputStream(inputStream);
         ZipEntry entry = zipInputStream.getNextEntry();
