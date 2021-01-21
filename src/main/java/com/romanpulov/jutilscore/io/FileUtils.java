@@ -119,36 +119,17 @@ public class FileUtils {
      * @return true if successful
      */
     public static boolean copy(String sourceFileName, String destFileName) {
-        InputStream inputStream = null;
-        OutputStream outputStream = null;
-
-        try {
-            inputStream = new FileInputStream(sourceFileName);
-            outputStream = new FileOutputStream(destFileName);
+        try (InputStream inputStream = new FileInputStream(sourceFileName);
+             OutputStream outputStream = new FileOutputStream(destFileName)
+             ) {
 
             //copy routine
             copyStream(inputStream, outputStream);
 
             return true;
         } catch (IOException e) {
+            e.printStackTrace();
             return false;
-        } finally {
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            if (outputStream != null) {
-                try {
-                    outputStream.flush();
-                    outputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
         }
     }
 

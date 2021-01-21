@@ -1,4 +1,4 @@
-package com.romanpulov.jutilscore.io;;
+package com.romanpulov.jutilscore.io;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -17,7 +17,7 @@ import java.util.zip.ZipOutputStream;
  */
 
 public class ZipFileUtils {
-    public static String ZIP_EXT = ".zip";
+    public static final String ZIP_EXT = ".zip";
 
     public static String getZipFileName(String fileName){
         int extensionPos = fileName.lastIndexOf(".");
@@ -37,9 +37,7 @@ public class ZipFileUtils {
      * @throws IOException exception in case of errors working with streams
      */
     public static void zipStream(String entryName, InputStream inputStream, OutputStream outputStream) throws IOException {
-        ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream);
-
-        try {
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)){
             //next entry
             zipOutputStream.putNextEntry(new ZipEntry(entryName));
 
@@ -52,9 +50,6 @@ public class ZipFileUtils {
 
             //complete entry
             zipOutputStream.closeEntry();
-        } finally {
-            zipOutputStream.flush();
-            zipOutputStream.close();
         }
     }
 
@@ -71,36 +66,15 @@ public class ZipFileUtils {
 
         File zipFile = new File(filePath + getZipFileName(fileName));
 
-        InputStream inputStream = null;
-        OutputStream outputStream = null;
-        try {
+        try (InputStream inputStream = new FileInputStream(sourceFile);
+             OutputStream outputStream = new FileOutputStream(zipFile)) {
             //init streams and entry
-            inputStream = new FileInputStream(sourceFile);
-            outputStream = new FileOutputStream(zipFile);
 
             zipStream(fileName, inputStream, outputStream);
 
         } catch (IOException e) {
+            e.printStackTrace();
             return null;
-        } finally {
-            //close input
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            //close output
-            if (outputStream != null) {
-                try {
-                    outputStream.flush();
-                    outputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
         }
 
         return zipFile.getPath();
@@ -114,20 +88,21 @@ public class ZipFileUtils {
      * @throws IOException in case of errors with streams
      */
     public static String unZipStream(InputStream inputStream, OutputStream outputStream) throws IOException {
-        ZipInputStream zipInputStream = new ZipInputStream(inputStream);
-        ZipEntry entry = zipInputStream.getNextEntry();
+        try (ZipInputStream zipInputStream = new ZipInputStream(inputStream)) {
+            ZipEntry entry = zipInputStream.getNextEntry();
 
-        if (entry != null) {
-            if (zipInputStream.available() > 0) {
-                byte[] buffer = new byte[1024];
-                int len;
-                while ((len = zipInputStream.read(buffer)) > 0) {
-                    outputStream.write(buffer, 0, len);
+            if (entry != null) {
+                if (zipInputStream.available() > 0) {
+                    byte[] buffer = new byte[1024];
+                    int len;
+                    while ((len = zipInputStream.read(buffer)) > 0) {
+                        outputStream.write(buffer, 0, len);
+                    }
                 }
+                return entry.getName();
+            } else {
+                return null;
             }
-            return entry.getName();
-        } else {
-            return null;
         }
     }
 
@@ -138,54 +113,25 @@ public class ZipFileUtils {
      * @return true if successful
      */
     public static boolean unZipFile(String filePath, String fileName) {
-        ZipFile zipFile = null;
-        InputStream inputStream = null;
-        OutputStream outputStream = null;
-        try {
-            zipFile = new ZipFile(filePath + fileName);
+        try (ZipFile zipFile = new ZipFile(filePath + fileName)) {
+
             if (zipFile.entries().hasMoreElements()) {
                 ZipEntry zipEntry = zipFile.entries().nextElement();
 
-                inputStream = zipFile.getInputStream(zipEntry);
-                outputStream = new FileOutputStream(filePath + zipEntry.getName());
-
-                byte[] buffer = new byte[1024];
-                int len;
-                while ((len = inputStream.read(buffer)) > 0) {
-                    outputStream.write(buffer, 0, len);
+                try (InputStream inputStream = zipFile.getInputStream(zipEntry);
+                     OutputStream outputStream = new FileOutputStream(filePath + zipEntry.getName())
+                     ) {
+                    byte[] buffer = new byte[1024];
+                    int len;
+                    while ((len = inputStream.read(buffer)) > 0) {
+                        outputStream.write(buffer, 0, len);
+                    }
                 }
             }
 
         } catch (IOException e) {
+            e.printStackTrace();
             return false;
-
-        } finally {
-            //zip file
-            if (zipFile != null)
-                try {
-                    zipFile.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-            //input stream
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            //output stream
-            if (outputStream != null) {
-                try {
-                    outputStream.flush();
-                    outputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
         }
 
         return true;

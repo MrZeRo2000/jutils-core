@@ -7,7 +7,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -52,8 +51,9 @@ public class FileUtilsTest {
 
     @AfterAll
     static void afterAll() throws Exception {
-        //clearFolder();
-        //System.out.println("Finalizing FileUtilsTest: folder cleared");
+        clearFolder(folderPath);
+        clearFolder(folderListPath);
+        System.out.println("Finalizing FileUtilsTest: folder cleared");
     }
 
     @Test

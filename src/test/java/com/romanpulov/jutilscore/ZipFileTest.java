@@ -88,7 +88,7 @@ public class ZipFileTest {
         Assertions.assertFalse(Files.exists(unZipFilePath));
         try (
                 InputStream inputStream = new FileInputStream(zipFilePath.toString());
-                OutputStream outputStream = new FileOutputStream(unZipFilePath.toString());
+                OutputStream outputStream = new FileOutputStream(unZipFilePath.toString())
         ) {
             String zipEntryName = ZipFileUtils.unZipStream(inputStream, outputStream);
             Assertions.assertEquals(filePath.getFileName().toString(), zipEntryName);
