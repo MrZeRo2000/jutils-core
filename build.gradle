@@ -23,7 +23,7 @@ plugins {
 }
 
 group = 'com.romanpulov'
-version = '0.2'
+version = '0.3'
 description = 'jutils-core'
 sourceCompatibility = '1.7'
 
@@ -71,7 +71,7 @@ ext {
     artifact = 'jutils-core'
 
     libraryDescription = 'Roman Pulov Java utils library'
-    libraryVersion = '0.2'
+    libraryVersion = '0.3'
 
     developerId = 'romanpulov'
     developerName = 'Roman Pulov'
