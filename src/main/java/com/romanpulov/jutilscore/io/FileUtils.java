@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -21,6 +22,10 @@ public class FileUtils {
     private static final String FILE_COPY_FORMAT = "%s." + BAK_EXT + "%02d";
 
     private static int mFileKeepCopiesCount = 5;
+
+    public interface FileProcessor {
+        boolean process(String fromFileName, String toFileName);
+    }
 
     /**
      * Sets retained file copies count, default is 5
@@ -59,6 +64,34 @@ public class FileUtils {
             return fileName;
         else
             return fileName.substring(0, pos);
+    }
+
+    /**
+     * Gets file extension
+     * @param fileName file name
+     * @return extension if exist or null if not
+     */
+    public static String getExtension(String fileName) {
+        int extensionIndex = fileName.lastIndexOf(".");
+        if (extensionIndex > -1) {
+            return fileName.substring(extensionIndex + 1);
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Checks if file is a backup file based on the extension
+     * @param fileName file name to check
+     * @return true if it is a backup file
+     */
+    public static boolean isBackupFileName(String fileName) {
+        String fileExtension = getExtension(fileName);
+        if (fileExtension == null) {
+            return false;
+        } else {
+            return fileExtension.startsWith(BAK_EXT);
+        }
     }
 
     public static String getFileNameFromTemp(String tempFileName) {
@@ -140,7 +173,7 @@ public class FileUtils {
      */
     public static boolean saveCopies(String fileName) {
         for (int cp = mFileKeepCopiesCount - 1; cp >= 0; cp--) {
-            File fc = new File(cp == 0 ? fileName : String.format(Locale.getDefault(), FILE_COPY_FORMAT, fileName, cp));
+            File fc = new File(cp == 0 ? fileName : getCopyFileName(fileName, cp));
             String copyFileName = getCopyFileName(fileName, cp + 1);
             if (fc.exists()) {
                 if (!copy(fc.getPath(), copyFileName))
@@ -166,6 +199,56 @@ public class FileUtils {
         }
         return true;
     }
+
+    public static boolean saveListCopies(List<String> fileNameList) {
+        return processListCopies(fileNameList, new FileProcessor() {
+            @Override
+            public boolean process(String fromFileName, String toFileName) {
+                File fc = new File(fromFileName);
+                return !fc.exists() || copy(fc.getPath(), toFileName);
+            }
+        });
+    }
+
+    public static boolean processListCopies(List<String> fileNameList, FileProcessor processor) {
+        String dataFileName = null;
+
+        for (String fileName: fileNameList) {
+            if (!FileUtils.isBackupFileName(fileName)) {
+                dataFileName = fileName;
+                break;
+            }
+        }
+
+        if (dataFileName == null) {
+            return false;
+        }
+
+        for (int cp = mFileKeepCopiesCount - 1; cp >= 0; cp--) {
+            String fromFileName = cp == 0 ? dataFileName : getCopyFileName(dataFileName, cp);
+            if (fileNameList.contains(fromFileName)) {
+                String toFileName = getCopyFileName(dataFileName, cp + 1);
+                if (!processor.process(fromFileName, toFileName)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+
+        /*
+        for (int cp = mFileKeepCopiesCount - 1; cp >= 0; cp--) {
+            File fc = new File(cp == 0 ? fileName : getCopyFileName(fileName, cp));
+            String copyFileName = getCopyFileName(fileName, cp + 1);
+            if (fc.exists()) {
+                if (!fc.renameTo(new File(copyFileName)))
+                    return false;
+            }
+        }
+        return true;
+*/
+    }
+
 
     /**
      * Renames temp file to normal file
