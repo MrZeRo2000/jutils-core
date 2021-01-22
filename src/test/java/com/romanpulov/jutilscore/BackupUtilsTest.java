@@ -80,6 +80,8 @@ public class BackupUtilsTest {
 
         Assertions.assertNotNull(BackupUtils.createRollingLocalBackup(dataFileName, backupFolderName, backupFileName));
 
+        Assertions.assertEquals(1, BackupUtils.getBackupFiles(backupFolderName).length);
+
         // generate and write random bytes file 2
 
         byte[] b2 = new byte[2012];
@@ -96,6 +98,8 @@ public class BackupUtilsTest {
         Assertions.assertTrue(Files.exists(filePath));
 
         Assertions.assertNotNull(BackupUtils.createRollingLocalBackup(dataFileName, backupFolderName, backupFileName));
+
+        Assertions.assertEquals(2, BackupUtils.getBackupFiles(backupFolderName).length);
 
         // restoring from backup
 

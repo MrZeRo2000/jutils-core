@@ -43,8 +43,8 @@ public class ZipFileTest {
 
     @AfterAll
     static void afterAll() throws Exception {
-        clearFolder();
-        System.out.println("Finalizing ZipFileTest: folder cleared");
+        //clearFolder();
+        //System.out.println("Finalizing ZipFileTest: folder cleared");
     }
 
     @Test

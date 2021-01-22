@@ -1,11 +1,6 @@
 package com.romanpulov.jutilscore.io;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.List;
 import java.util.Locale;
 
@@ -113,6 +108,30 @@ public class FileUtils {
     }
 
     /**
+     * Stream copy procedure
+     * @param inputStream input stream
+     * @param outputStream output stream
+     * @throws IOException in case of errors with streams
+     */
+    public static void copyStreamWithZip(String entryName, InputStream inputStream, OutputStream outputStream) throws IOException {
+        byte[] buf = new byte[FILE_BUF_LEN];
+        int len;
+
+        byte[] bytes;
+        try(ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()) {
+            while ((len = inputStream.read(buf)) > 0) {
+                arrayOutputStream.write(buf, 0, len);
+            }
+            bytes = arrayOutputStream.toByteArray();
+        }
+
+        try(ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(bytes)) {
+            ZipFileUtils.zipStream(entryName, arrayInputStream, outputStream);
+        }
+    }
+
+
+    /**
      * File copy procedure
      * @param sourceFileName source file
      * @param destFileName destination file
@@ -125,6 +144,27 @@ public class FileUtils {
 
             //copy routine
             copyStream(inputStream, outputStream);
+
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * File copy procedure
+     * @param sourceFileName source file
+     * @param destFileName destination file
+     * @return true if successful
+     */
+    public static boolean copyWithZip(String entryName, String sourceFileName, String destFileName) {
+        try (InputStream inputStream = new FileInputStream(sourceFileName);
+             OutputStream outputStream = new FileOutputStream(destFileName)
+        ) {
+
+            //copy routine
+            copyStreamWithZip(entryName, inputStream, outputStream);
 
             return true;
         } catch (IOException e) {
@@ -190,6 +230,17 @@ public class FileUtils {
             }
         });
     }
+
+    public static boolean renameListCopies(List<String> fileNameList) {
+        return processListCopies(fileNameList, new FileProcessor() {
+            @Override
+            public boolean process(String fromFileName, String toFileName) {
+                File fc = new File(fromFileName);
+                return !fc.exists() || fc.renameTo(new File(toFileName));
+            }
+        });
+    }
+
 
     public static boolean processListCopies(List<String> fileNameList, FileProcessor processor) {
         String dataFileName = null;

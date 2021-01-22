@@ -6,6 +6,7 @@ import com.romanpulov.jutilscore.io.ZipFileUtils;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -35,6 +36,15 @@ public class BackupUtils {
         return normalizeFolderName(folderName) + fileName;
     }
 
+    private static boolean prepareBackupFolder(String backupFolderName) {
+
+        //init backup folder
+        File backupFolder = new File(normalizeFolderName(backupFolderName));
+
+        return backupFolder.exists() || backupFolder.mkdir();
+
+    }
+
     /**
      * Created local backup
      * @return archived file name if successful
@@ -42,23 +52,21 @@ public class BackupUtils {
     private static String createLocalBackup(String dataFileName, String backupFolderName, String backupFileName) {
         String backupFullFileName = getFullFileName(backupFolderName, backupFileName);
 
-        //init backup folder
-        File backupFolder = new File(normalizeFolderName(backupFolderName));
-        if (!backupFolder.exists()) {
-            if (!backupFolder.mkdir()) {
+        if (!prepareBackupFolder(backupFolderName)) {
+            return null;
+        }
+
+        if (backupFullFileName.equals(dataFileName)) {
+            return null;
+        } else {
+            String zipFileName  = ZipFileUtils.getZipFileName(backupFullFileName);
+            if (FileUtils.copyWithZip(backupFileName, dataFileName, zipFileName)) {
+                return backupFileName;
+            } else {
                 return null;
             }
         }
-
-        //write file
-        if (!backupFullFileName.equals(dataFileName)) {
-            if (!FileUtils.copy(dataFileName, backupFullFileName))
-                return null;
-        }
-
-        //archive file
-        return ZipFileUtils.zipFile(normalizeFolderName(backupFolderName), backupFileName);
-    }
+   }
 
     /**
      * Restores backup from archive
@@ -117,23 +125,15 @@ public class BackupUtils {
      * @return archived file if successful
      */
     public static String createRollingLocalBackup(String dataFileName, String backupFolderName, String backupFileName) {
-        //get file names
-        String fileName = getFullFileName(backupFolderName, backupFileName);
-        String zipFileName = ZipFileUtils.getZipFileName(fileName);
 
-        //roll copies of data: first try rename, then copy
-        if (!FileUtils.renameCopies(zipFileName))
-            if ((!FileUtils.saveCopies(zipFileName)))
-                return null;
+        //roll old backups
+        List<String> fileNames = getBackupFileNames(backupFolderName);
+        if (fileNames != null && !FileUtils.renameListCopies(fileNames) && !FileUtils.saveListCopies(fileNames)) {
+            return null;
+        }
 
-        //create backup
-        String result = createLocalBackup(dataFileName, backupFolderName, backupFileName);
-
-        //delete non zipped file, ignore any errors
-        if (result != null)
-            FileUtils.delete(fileName);
-
-        return result;
+        //create backup and return result
+        return createLocalBackup(dataFileName, backupFolderName, backupFileName);
     }
 
     public static class BackupFileFilter implements FileFilter {
@@ -152,4 +152,24 @@ public class BackupUtils {
         File folder = new File(normalizeFolderName(backupFolderName));
         return folder.listFiles(new BackupFileFilter());
     }
+
+    /**
+     * Returns backup file names from backup folder
+     * @return File list
+     */
+    public static List<String> getBackupFileNames(String backupFolderName) {
+        File[] fileList = getBackupFiles(backupFolderName);
+
+        if (fileList == null) {
+            return null;
+        } else {
+            List<String> result = new ArrayList<>(fileList.length);
+            for (File f : fileList) {
+                result.add(f.getAbsolutePath());
+            }
+
+            return result;
+        }
+    }
+
 }
