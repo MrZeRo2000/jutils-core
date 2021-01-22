@@ -52,11 +52,7 @@ public class BackupUtils {
     private static String createLocalBackup(String dataFileName, String backupFolderName, String backupFileName) {
         String backupFullFileName = getFullFileName(backupFolderName, backupFileName);
 
-        if (!prepareBackupFolder(backupFolderName)) {
-            return null;
-        }
-
-        if (backupFullFileName.equals(dataFileName)) {
+        if (backupFullFileName.equals(dataFileName) || !prepareBackupFolder(backupFolderName)) {
             return null;
         } else {
             String zipFileName  = ZipFileUtils.getZipFileName(backupFullFileName);
