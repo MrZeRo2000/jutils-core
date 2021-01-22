@@ -98,14 +98,14 @@ public class BackupUtils {
             String backupFolderName,
             String backupFileName,
             List<String> backupFileNames,
-            FileUtils.FileProcessor fileProcessor
+            FileUtils.FileProcessor copyFileProcessor
 
     ) {
         //get file names
         String fileName = getFullFileName(backupFolderName, backupFileName);
         String zipFileName = ZipFileUtils.getZipFileName(fileName);
 
-        if (!FileUtils.processListCopies(backupFileNames, fileProcessor)) {
+        if (!FileUtils.processListCopies(backupFileNames, copyFileProcessor)) {
             return null;
         }
 
