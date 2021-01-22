@@ -5,6 +5,8 @@ import com.romanpulov.jutilscore.io.ZipFileUtils;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.InputStream;
+import java.util.List;
 
 /**
  * Backup and restore for file
@@ -89,6 +91,25 @@ public class BackupUtils {
         }
 
         return dataFileName;
+    }
+
+    public static String createRollingStreamBackup(
+            InputStream dataFileStream,
+            String backupFolderName,
+            String backupFileName,
+            List<String> backupFileNames,
+            FileUtils.FileProcessor fileProcessor
+
+    ) {
+        //get file names
+        String fileName = getFullFileName(backupFolderName, backupFileName);
+        String zipFileName = ZipFileUtils.getZipFileName(fileName);
+
+        if (!FileUtils.processListCopies(backupFileNames, fileProcessor)) {
+            return null;
+        }
+
+        return null;
     }
 
     /**
