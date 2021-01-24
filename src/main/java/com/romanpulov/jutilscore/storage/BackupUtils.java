@@ -3,9 +3,7 @@ package com.romanpulov.jutilscore.storage;
 import com.romanpulov.jutilscore.io.FileUtils;
 import com.romanpulov.jutilscore.io.ZipFileUtils;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.InputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,12 +35,10 @@ public class BackupUtils {
     }
 
     private static boolean prepareBackupFolder(String backupFolderName) {
-
         //init backup folder
         File backupFolder = new File(normalizeFolderName(backupFolderName));
 
         return backupFolder.exists() || backupFolder.mkdir();
-
     }
 
     /**
@@ -97,25 +93,6 @@ public class BackupUtils {
         return dataFileName;
     }
 
-    public static String createRollingStreamBackup(
-            InputStream dataFileStream,
-            String backupFolderName,
-            String backupFileName,
-            List<String> backupFileNames,
-            FileUtils.FileProcessor copyFileProcessor
-
-    ) {
-        //get file names
-        String fileName = getFullFileName(backupFolderName, backupFileName);
-        String zipFileName = ZipFileUtils.getZipFileName(fileName);
-
-        if (!FileUtils.processListCopies(backupFileNames, copyFileProcessor)) {
-            return null;
-        }
-
-        return null;
-    }
-
     /**
      * Created rolling backup
      * @return archived file if successful
@@ -135,9 +112,19 @@ public class BackupUtils {
     public static class BackupFileFilter implements FileFilter {
         @Override
         public boolean accept(File pathname) {
-            String lowAbsolutePath = pathname.getAbsolutePath().toLowerCase();
-            return lowAbsolutePath.endsWith(ZipFileUtils.ZIP_EXT) || lowAbsolutePath.matches("\\S*" +ZipFileUtils.ZIP_EXT + "." + FileUtils.BAK_EXT + "" + "[0-9]{2}");
+            return isBackupFileName(pathname.getAbsolutePath());
         }
+    }
+
+    /**
+     * Checks if file name is a backup file name
+     * @param fileName file name ot check
+     * @return true if file name is a backup
+     */
+    public static boolean isBackupFileName(String fileName) {
+        String lowerFileName = fileName.toLowerCase();
+        return lowerFileName.endsWith(ZipFileUtils.ZIP_EXT) ||
+                lowerFileName.matches("\\S*" +ZipFileUtils.ZIP_EXT + "." + FileUtils.BAK_EXT + "" + "[0-9]{2}");
     }
 
     /**
@@ -167,5 +154,4 @@ public class BackupUtils {
             return result;
         }
     }
-
 }
