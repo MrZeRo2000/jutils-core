@@ -1,7 +1,5 @@
 package com.romanpulov.jutilscore.storage;
 
-import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 public class FileBackupProcessor implements BackupProcessor {
@@ -27,13 +25,6 @@ public class FileBackupProcessor implements BackupProcessor {
 
     @Override
     public List<String> getBackupFileNames() {
-        File[] backupFiles = BackupUtils.getBackupFiles(mBackupFolderName);
-
-        List<String> backupFileNames = new ArrayList<>(backupFiles.length);
-        for (File f: backupFiles) {
-            backupFileNames.add(f.getAbsolutePath());
-        }
-
-        return backupFileNames;
+        return BackupUtils.getBackupFileNames(mBackupFolderName);
     }
 }
