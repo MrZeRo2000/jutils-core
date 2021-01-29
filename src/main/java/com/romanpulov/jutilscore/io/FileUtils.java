@@ -1,6 +1,7 @@
 package com.romanpulov.jutilscore.io;
 
 import java.io.*;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 
@@ -221,7 +222,7 @@ public class FileUtils {
         return true;
     }
 
-    public static boolean saveListCopies(List<String> fileNameList) {
+    public static boolean saveListCopies(Collection<String> fileNameList) {
         return processListCopies(fileNameList, new FileProcessor() {
             @Override
             public boolean process(String fromFileName, String toFileName) {
@@ -231,7 +232,7 @@ public class FileUtils {
         });
     }
 
-    public static boolean renameListCopies(List<String> fileNameList) {
+    public static boolean renameListCopies(Collection<String> fileNameList) {
         return processListCopies(fileNameList, new FileProcessor() {
             @Override
             public boolean process(String fromFileName, String toFileName) {
@@ -241,8 +242,7 @@ public class FileUtils {
         });
     }
 
-
-    public static boolean processListCopies(List<String> fileNameList, FileProcessor processor) {
+    public static boolean processListCopies(Collection<String> fileNameList, FileProcessor processor) {
         String dataFileName = null;
 
         for (String fileName: fileNameList) {
