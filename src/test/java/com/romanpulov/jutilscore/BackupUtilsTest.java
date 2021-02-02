@@ -78,9 +78,16 @@ public class BackupUtilsTest {
         String backupFolderName = filePath.getParent().toAbsolutePath().toString() + "/backup";
         String backupFileName = "data-file-backup.bin";
 
+        // folder does not exist and backups are created
         Assertions.assertNotNull(BackupUtils.createRollingLocalBackup(dataFileName, backupFolderName, backupFileName));
-
         Assertions.assertEquals(1, BackupUtils.getBackupFiles(backupFolderName).length);
+
+        Files.deleteIfExists(Paths.get(BackupUtils.getBackupFiles(backupFolderName)[0].getAbsolutePath()));
+
+        // folder exists and backups are created
+        Assertions.assertNotNull(BackupUtils.createRollingLocalBackup(dataFileName, backupFolderName, backupFileName));
+        Assertions.assertEquals(1, BackupUtils.getBackupFiles(backupFolderName).length);
+
 
         // generate and write random bytes file 2
 

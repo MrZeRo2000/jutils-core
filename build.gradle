@@ -22,9 +22,9 @@ plugins {
     id "maven"
 }
 
-group = 'com.romanpulov'
-version = '0.3.5'
-description = 'jutils-core'
+group = publishedGroupId
+version = libraryVersion
+description = artifact
 sourceCompatibility = '1.7'
 
 repositories {

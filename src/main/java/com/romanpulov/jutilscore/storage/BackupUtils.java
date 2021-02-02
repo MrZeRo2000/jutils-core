@@ -99,14 +99,14 @@ public class BackupUtils {
      */
     public static String createRollingLocalBackup(String dataFileName, String backupFolderName, String backupFileName) {
 
-        //roll old backups
         List<String> fileNames = getBackupFileNames(backupFolderName);
-        if (fileNames != null && !FileUtils.renameListCopies(fileNames) && !FileUtils.saveListCopies(fileNames)) {
-            return null;
-        }
 
-        //create backup and return result
-        return createLocalBackup(dataFileName, backupFolderName, backupFileName);
+        return fileNames != null &&
+                !fileNames.isEmpty() &&
+                !FileUtils.renameListCopies(fileNames) &&
+                !FileUtils.saveListCopies(fileNames) ?
+                null :
+                createLocalBackup(dataFileName, backupFolderName, backupFileName);
     }
 
     public static class BackupFileFilter implements FileFilter {
