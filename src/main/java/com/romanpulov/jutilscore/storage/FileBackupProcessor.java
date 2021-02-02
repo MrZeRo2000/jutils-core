@@ -1,5 +1,8 @@
 package com.romanpulov.jutilscore.storage;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 public class FileBackupProcessor implements BackupProcessor {
@@ -26,5 +29,10 @@ public class FileBackupProcessor implements BackupProcessor {
     @Override
     public List<String> getBackupFileNames() {
         return BackupUtils.getBackupFileNames(backupFolderName);
+    }
+
+    @Override
+    public InputStream createBackupInputStream(String backupFileName) throws IOException {
+        return new FileInputStream(backupFolderName + backupFileName);
     }
 }
