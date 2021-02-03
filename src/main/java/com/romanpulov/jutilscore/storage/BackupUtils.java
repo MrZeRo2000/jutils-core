@@ -100,11 +100,19 @@ public class BackupUtils {
     public static String createRollingLocalBackup(String dataFileName, String backupFolderName, String backupFileName) {
 
         List<String> fileNames = getBackupFileNames(backupFolderName);
+        List<String> fullFileNames = null;
+
+        if (fileNames != null) {
+            fullFileNames = new ArrayList<>();
+            for (String fileName : fileNames) {
+                fullFileNames.add(normalizeFolderName(backupFolderName) + fileName);
+            }
+        }
 
         return fileNames != null &&
                 !fileNames.isEmpty() &&
-                !FileUtils.renameListCopies(fileNames) &&
-                !FileUtils.saveListCopies(fileNames) ?
+                !FileUtils.renameListCopies(fullFileNames) &&
+                !FileUtils.saveListCopies(fullFileNames) ?
                 null :
                 createLocalBackup(dataFileName, backupFolderName, backupFileName);
     }
@@ -148,7 +156,7 @@ public class BackupUtils {
         } else {
             List<String> result = new ArrayList<>(fileList.length);
             for (File f : fileList) {
-                result.add(f.getAbsolutePath());
+                result.add(f.getName());
             }
 
             return result;
