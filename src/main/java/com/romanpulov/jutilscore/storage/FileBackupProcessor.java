@@ -17,6 +17,21 @@ public class FileBackupProcessor implements BackupProcessor {
     }
 
     @Override
+    public String getDataFileName() {
+        return dataFileName;
+    }
+
+    @Override
+    public String getBackupFolderName() {
+        return backupFolderName;
+    }
+
+    @Override
+    public String getBackupFileName() {
+        return backupFileName;
+    }
+
+    @Override
     public String createRollingBackup() {
         return BackupUtils.createRollingLocalBackup(dataFileName, backupFolderName, backupFileName);
     }

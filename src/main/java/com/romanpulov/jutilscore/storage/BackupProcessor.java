@@ -5,8 +5,13 @@ import java.io.InputStream;
 import java.util.List;
 
 public interface BackupProcessor {
+    String getDataFileName();
+    String getBackupFolderName();
+    String getBackupFileName();
+
+    List<String> getBackupFileNames();
+
     String createRollingBackup();
     String restoreBackup();
-    List<String> getBackupFileNames();
     InputStream createBackupInputStream(String backupFileName) throws IOException;
 }
