@@ -24,6 +24,13 @@ public class ProcessExecutorTest {
             exit 42
             """;
 
+    private static final String ARGS_SCRIPT = """
+            param([string]$First, [string]$Second)
+            Write-Output "First=$First"
+            Write-Output "Second=$Second"
+            exit 0
+            """;
+
     @BeforeAll
     static void beforeAll() throws Exception {
         FileUtilsTest.clearFolder(folderPath);
@@ -70,5 +77,23 @@ public class ProcessExecutorTest {
         Assertions.assertNotEquals(0, result.exitCode());
         Assertions.assertEquals(42, result.exitCode());
         Assertions.assertTrue(result.output().contains("About to fail"));
+    }
+
+    @Test
+    void testExecutePowershellWithArgs() throws Exception {
+        Path scriptPath = writeScript("args.ps1", ARGS_SCRIPT);
+
+        ProcessExecutor.ExecutionResult result = ProcessExecutor.executePowershell(
+                scriptPath.toAbsolutePath().toString(),
+                "-First", "alpha",
+                "-Second", "beta"
+        );
+
+        System.out.println("Args exit code: " + result.exitCode());
+        System.out.println("Args output: " + result.output());
+
+        Assertions.assertEquals(0, result.exitCode());
+        Assertions.assertTrue(result.output().contains("First=alpha"));
+        Assertions.assertTrue(result.output().contains("Second=beta"));
     }
 }

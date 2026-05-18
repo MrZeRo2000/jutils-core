@@ -3,6 +3,9 @@ package com.romanpulov.jutilscore.process;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -37,15 +40,16 @@ public class ProcessExecutor {
         return new ExecutionResult(exitCode, outputFuture.get());
     }
 
-    public static ExecutionResult executePowershell(String scriptPath)
+    public static ExecutionResult executePowershell(String scriptPath, String... args)
             throws IOException, InterruptedException, ExecutionException {
-        String[] commands = new String[]{
+        List<String> commands = new ArrayList<>(List.of(
                 "powershell.exe",
                 "-ExecutionPolicy", "Bypass",
                 "-NonInteractive",
                 "-File", scriptPath
-        };
+        ));
+        Collections.addAll(commands, args); // append script arguments
 
-        return executeCommand(commands);
+        return executeCommand(commands.toArray(new String[0]));
     }
 }
