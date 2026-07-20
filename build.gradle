@@ -19,6 +19,8 @@ repositories {
 dependencies {
     // Use JUnit test framework
     testImplementation ('org.junit.jupiter:junit-jupiter:5.10.3')
+    // Gradle 9 no longer adds the launcher automatically
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 java {
@@ -37,7 +39,7 @@ ext {
     // Maven metadata
     publishedGroupId = 'com.romanpulov'
     artifact = 'jutils-core'
-    libraryVersion = '0.5.1'
+    libraryVersion = '0.5.2'
 }
 
 group = publishedGroupId
