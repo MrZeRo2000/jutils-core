@@ -1,11 +1,7 @@
 package com.romanpulov.jutilscore.io;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -58,10 +54,7 @@ public class FileUtils {
     public static String removeExtension(String fileName, String extension) {
         int pos;
 
-        if (extension == null)
-            pos = fileName.lastIndexOf(FILE_EXTENSION);
-        else
-            pos = fileName.lastIndexOf(extension);
+        pos = fileName.lastIndexOf(Objects.requireNonNullElse(extension, FILE_EXTENSION));
 
         if (pos == -1)
             return fileName;
@@ -263,22 +256,16 @@ public class FileUtils {
     }
 
     public static boolean saveListCopies(Collection<String> fileNameList) {
-        return processListCopies(fileNameList, new FileProcessor() {
-            @Override
-            public boolean process(String fromFileName, String toFileName) {
-                File fc = new File(fromFileName);
-                return !fc.exists() || copy(fc.getPath(), toFileName);
-            }
+        return processListCopies(fileNameList, (fromFileName, toFileName) -> {
+            File fc = new File(fromFileName);
+            return !fc.exists() || copy(fc.getPath(), toFileName);
         });
     }
 
     public static boolean renameListCopies(Collection<String> fileNameList) {
-        return processListCopies(fileNameList, new FileProcessor() {
-            @Override
-            public boolean process(String fromFileName, String toFileName) {
-                File fc = new File(fromFileName);
-                return !fc.exists() || fc.renameTo(new File(toFileName));
-            }
+        return processListCopies(fileNameList, (fromFileName, toFileName) -> {
+            File fc = new File(fromFileName);
+            return !fc.exists() || fc.renameTo(new File(toFileName));
         });
     }
 
