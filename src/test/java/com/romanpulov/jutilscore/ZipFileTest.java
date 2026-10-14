@@ -10,7 +10,15 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 public class ZipFileTest {
 
@@ -18,17 +26,20 @@ public class ZipFileTest {
 
     static void clearFolder() throws Exception  {
         if (Files.exists(folderPath)) {
-            Files.walk(folderPath)
-                    .filter(path -> !Files.isDirectory(path))
-                    .forEach(path -> {
-                        System.out.println("Deleting " + path.toAbsolutePath().toString());
-                        try {
-                            Files.deleteIfExists(path);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    });
-            Files.delete(folderPath);
+            try (Stream<Path> folderStreamPath = Files.walk(folderPath)) {
+                folderStreamPath
+                        .filter(path -> !Files.isDirectory(path))
+                        .forEach(path -> {
+                            System.out.println("Deleting " + path.toAbsolutePath());
+                            try {
+                                Files.deleteIfExists(path);
+                            } catch (IOException e) {
+                                throw new UncheckedIOException(e);
+                            }
+                        });
+                Files.delete(folderPath);
+
+            }
         }
     }
 
@@ -38,13 +49,13 @@ public class ZipFileTest {
         clearFolder();
 
         Files.createDirectory(folderPath);
-        System.out.println("Folder " + folderPath.toAbsolutePath().toString() + " created");
+        System.out.println("Folder " + folderPath.toAbsolutePath() + " created");
     }
 
     @AfterAll
     static void afterAll() throws Exception {
-        //clearFolder();
-        //System.out.println("Finalizing ZipFileTest: folder cleared");
+        clearFolder();
+        System.out.println("Finalizing ZipFileTest: folder cleared");
     }
 
     @Test
@@ -98,5 +109,55 @@ public class ZipFileTest {
         // check if it is the same as bytes which were written
 
         Assertions.assertArrayEquals(b, Files.readAllBytes(unZipFilePath));
+    }
+
+    @Test
+    void testZipFiles() throws Exception {
+        final Path zipFilePath = Paths.get(folderPath.toString(), "test-files.zip");
+        final String[] names = {"multi-1.bin", "multi-2.bin", "multi-3.bin"};
+
+        // generate random bytes files
+
+        Random random = new Random();
+        Map<String, byte[]> content = new LinkedHashMap<>();
+        List<File> files = new ArrayList<>();
+        for (String name : names) {
+            byte[] b = new byte[1024 + random.nextInt(2048)];
+            random.nextBytes(b);
+            Path path = Paths.get(folderPath.toString(), name);
+            Files.write(path, b);
+            content.put(name, b);
+            files.add(path.toFile());
+        }
+
+        // zip all files into one archive
+
+        Assertions.assertFalse(Files.exists(zipFilePath));
+        Assertions.assertTrue(ZipFileUtils.zipFiles(zipFilePath.toString(), files));
+        Assertions.assertTrue(Files.exists(zipFilePath));
+
+        // check archive entries and their content
+
+        Map<String, byte[]> actual = new LinkedHashMap<>();
+        try (ZipFile zipFile = new ZipFile(zipFilePath.toFile())) {
+            Enumeration<? extends ZipEntry> entries = zipFile.entries();
+            while (entries.hasMoreElements()) {
+                ZipEntry entry = entries.nextElement();
+                try (InputStream inputStream = zipFile.getInputStream(entry)) {
+                    actual.put(entry.getName(), inputStream.readAllBytes());
+                }
+            }
+        }
+
+        Assertions.assertEquals(content.keySet(), actual.keySet());
+        for (String name : names) {
+            Assertions.assertArrayEquals(content.get(name), actual.get(name));
+        }
+
+        // missing source file should fail
+
+        Assertions.assertFalse(ZipFileUtils.zipFiles(
+                Paths.get(folderPath.toString(), "test-files-missing.zip").toString(),
+                List.of(new File(folderPath.toFile(), "does-not-exist.bin"))));
     }
 }

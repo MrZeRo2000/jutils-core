@@ -1,17 +1,25 @@
 package com.romanpulov.jutilscore;
 
 import com.romanpulov.jutilscore.io.FileUtils;
+import com.romanpulov.jutilscore.io.ZipFileUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.stream.Stream;
+import java.util.zip.ZipFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Random;
 import java.util.stream.Collectors;
 
@@ -22,17 +30,19 @@ public class FileUtilsTest {
 
     static void clearFolder(Path folder) throws Exception {
         if (Files.exists(folder)) {
-            Files.walk(folder)
-                    .filter(path -> !Files.isDirectory(path))
-                    .forEach(path -> {
-                        System.out.println("Deleting " + path.toAbsolutePath().toString());
-                        try {
-                            Files.deleteIfExists(path);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    });
-            Files.delete(folder);
+            try(Stream<Path> folderStreamPath = Files.walk(folder)) {
+                folderStreamPath
+                        .filter(path -> !Files.isDirectory(path))
+                        .forEach(path -> {
+                            System.out.println("Deleting " + path.toAbsolutePath());
+                            try {
+                                Files.deleteIfExists(path);
+                            } catch (IOException e) {
+                                throw new UncheckedIOException(e);
+                            }
+                        });
+                Files.delete(folder);
+            }
         }
     }
 
@@ -43,10 +53,10 @@ public class FileUtilsTest {
         clearFolder(folderListPath);
 
         Files.createDirectory(folderPath);
-        System.out.println("Folder " + folderPath.toAbsolutePath().toString() + " created");
+        System.out.println("Folder " + folderPath.toAbsolutePath() + " created");
 
         Files.createDirectory(folderListPath);
-        System.out.println("Folder " + folderListPath.toAbsolutePath().toString() + " created");
+        System.out.println("Folder " + folderListPath.toAbsolutePath() + " created");
     }
 
     @AfterAll
@@ -177,5 +187,41 @@ public class FileUtilsTest {
         Assertions.assertArrayEquals(b2, Files.readAllBytes(copy1FilePath));
         Assertions.assertFalse(Files.exists(copy3FilePath));
 
+    }
+
+    @Test
+    void listFilesTest(@TempDir Path dir) throws Exception {
+        Files.write(dir.resolve("b.pdf"), new byte[] {1});
+        Files.write(dir.resolve("a.pdf"), new byte[] {2});
+        Files.write(dir.resolve("c.txt"), new byte[] {3});
+        Files.createDirectory(dir.resolve("folder.pdf"));
+        Files.write(dir.resolve("folder.pdf").resolve("nested.pdf"), new byte[] {4});
+
+        // only matching regular files from the flat folder
+
+        List<File> pdfFiles = FileUtils.listFiles(dir.toString(), "*.pdf");
+        Assertions.assertEquals(
+                Set.of(dir.resolve("a.pdf").toFile(), dir.resolve("b.pdf").toFile()),
+                new HashSet<>(pdfFiles));
+        Assertions.assertEquals(2, pdfFiles.size());
+
+        Assertions.assertEquals(1, FileUtils.listFiles(dir.toString(), "?.t*").size());
+        Assertions.assertEquals(3, FileUtils.listFiles(dir.toString(), "*.*").size());
+        Assertions.assertEquals(1, FileUtils.listFiles(dir.toString(), "a.pdf").size());
+        // other glob characters are literals, not special
+        Assertions.assertTrue(FileUtils.listFiles(dir.toString(), "[a-b].pdf").isEmpty());
+        Assertions.assertTrue(FileUtils.listFiles(dir.toString(), "*.{pdf,txt}").isEmpty());
+        Assertions.assertTrue(FileUtils.listFiles(dir.toString(), "*.doc").isEmpty());
+        Assertions.assertTrue(FileUtils.listFiles(dir.resolve("missing").toString(), "*.pdf").isEmpty());
+
+        // result can be passed straight to zipFiles
+
+        Path zipPath = dir.resolve("pdfs.zip");
+        Assertions.assertTrue(ZipFileUtils.zipFiles(zipPath.toString(), pdfFiles));
+        try (ZipFile zipFile = new ZipFile(zipPath.toFile())) {
+            Assertions.assertEquals(2, zipFile.size());
+            Assertions.assertNotNull(zipFile.getEntry("a.pdf"));
+            Assertions.assertNotNull(zipFile.getEntry("b.pdf"));
+        }
     }
 }

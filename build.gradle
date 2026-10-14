@@ -39,7 +39,7 @@ ext {
     // Maven metadata
     publishedGroupId = 'com.romanpulov'
     artifact = 'jutils-core'
-    libraryVersion = '0.5.3'
+    libraryVersion = '0.6.0'
 }
 
 group = publishedGroupId

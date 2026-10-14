@@ -6,6 +6,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -17,6 +20,8 @@ import java.util.zip.ZipOutputStream;
  */
 
 public class ZipFileUtils {
+    private static final Logger LOGGER = Logger.getLogger(ZipFileUtils.class.getName());
+
     public static final String ZIP_EXT = ".zip";
 
     public static String getZipFileName(String fileName){
@@ -73,11 +78,40 @@ public class ZipFileUtils {
             zipStream(fileName, inputStream, outputStream);
 
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.WARNING, "Error zipping file " + sourceFile, e);
             return null;
         }
 
         return zipFile.getPath();
+    }
+
+    /**
+     * ZIPs several files into one archive, each stored under its own file name
+     * @param zipFileName path of the zip file to create
+     * @param files files to add
+     * @return true if successful
+     */
+    public static boolean zipFiles(String zipFileName, List<File> files) {
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(new FileOutputStream(zipFileName))) {
+            byte[] buffer = new byte[1024];
+            for (File file : files) {
+                try (InputStream inputStream = new FileInputStream(file)) {
+                    zipOutputStream.putNextEntry(new ZipEntry(file.getName()));
+
+                    int len;
+                    while ((len = inputStream.read(buffer)) > 0) {
+                        zipOutputStream.write(buffer, 0, len);
+                    }
+
+                    zipOutputStream.closeEntry();
+                }
+            }
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Error zipping files to " + zipFileName, e);
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -130,7 +164,7 @@ public class ZipFileUtils {
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.WARNING, "Error unzipping file " + filePath + fileName, e);
             return false;
         }
 

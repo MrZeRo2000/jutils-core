@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -25,7 +26,7 @@ public class BackupUtilsTest {
                         try {
                             Files.deleteIfExists(path);
                         } catch (IOException e) {
-                            e.printStackTrace();
+                            throw new UncheckedIOException(e);
                         }
                     });
             Files.walk(folder)
@@ -35,7 +36,7 @@ public class BackupUtilsTest {
                         try {
                             Files.deleteIfExists(path);
                         } catch (IOException e) {
-                            e.printStackTrace();
+                            throw new UncheckedIOException(e);
                         }
                     });
             Files.delete(folder);

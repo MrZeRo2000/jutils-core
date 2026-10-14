@@ -1,9 +1,14 @@
 package com.romanpulov.jutilscore.io;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 /**
  * File utilities
@@ -11,6 +16,8 @@ import java.util.Locale;
  */
 
 public class FileUtils {
+    private static final Logger LOGGER = Logger.getLogger(FileUtils.class.getName());
+
     public static final String BAK_EXT = "bak";
     private static final int FILE_BUF_LEN = 1024;
     private static final String FILE_EXTENSION = ".";
@@ -148,7 +155,7 @@ public class FileUtils {
 
             return true;
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.WARNING, "Error copying " + sourceFileName + " to " + destFileName, e);
             return false;
         }
     }
@@ -169,7 +176,7 @@ public class FileUtils {
 
             return true;
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.WARNING, "Error copying with zip " + sourceFileName + " to " + destFileName, e);
             return false;
         }
     }
@@ -182,6 +189,39 @@ public class FileUtils {
     public static boolean delete(String fileName) {
         File f = new File(fileName);
         return (f.exists() && f.delete());
+    }
+
+    /**
+     * Lists regular files in the folder matching the mask, without descending into subfolders
+     * @param folderName folder to list
+     * @param mask mask where * is any number of characters and ? is a single character, for example "*.pdf"
+     * @return files in no particular order, suitable for {@link ZipFileUtils#zipFiles}; empty list if the folder cannot be read
+     */
+    public static List<File> listFiles(String folderName, String mask) {
+        final Pattern pattern = maskToPattern(mask);
+
+        File[] files = new File(folderName).listFiles(f -> f.isFile() && pattern.matcher(f.getName()).matches());
+        if (files == null) {
+            LOGGER.log(Level.WARNING, "Error listing " + mask + " in " + folderName);
+            return new ArrayList<>();
+        }
+        return new ArrayList<>(Arrays.asList(files));
+    }
+
+    /**
+     * Converts mask to regular expression, * is any number of characters and ? is a single character.
+     * Matching is case-insensitive on Windows, as the file system is
+     */
+    private static Pattern maskToPattern(String mask) {
+        StringBuilder sb = new StringBuilder();
+        for (char c : mask.toCharArray()) {
+            switch (c) {
+                case '*': sb.append(".*"); break;
+                case '?': sb.append('.'); break;
+                default: sb.append(Pattern.quote(String.valueOf(c)));
+            }
+        }
+        return Pattern.compile(sb.toString(), File.separatorChar == '\\' ? Pattern.CASE_INSENSITIVE : 0);
     }
 
     public static String getCopyFileName(String fileName, int copyNum) {
